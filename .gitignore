@@ -1,8 +1,9 @@
 # Prerequisites
 *.d
 
-# bin folder
+# Folders
 bin/
+obj/
 
 # Object files
 *.o

@@ -4,12 +4,14 @@ CFLAGS = -Wall -g
 LDFLAGS =
 
 # Source and object files
-SRC = server.c
-OBJ = $(SRC:.c=.o)
-
-# Executable name
-TARGET = server
+SRC_DIR = ./src
+OBJ_DIR = ./obj
 BIN_DIR = ./bin
+SRC = $(wildcard $(SRC_DIR)/*.c)
+OBJ = $(SRC:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
+
+# Executable name and target directory
+TARGET = server
 
 # Default target: compile and link the program
 all: $(BIN_DIR)/$(TARGET)
@@ -20,12 +22,13 @@ $(BIN_DIR)/$(TARGET): $(OBJ)
 	$(CC) $(OBJ) -o $(BIN_DIR)/$(TARGET) $(LDFLAGS)
 
 # Rule to compile source files into object files
-%.o: %.c
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
+	@mkdir -p $(OBJ_DIR)  # Create the obj directory if it doesn't exist
 	$(CC) $(CFLAGS) -c $< -o $@
 
 # Clean up the build files
 clean:
-	rm -f $(OBJ) $(BIN_DIR)/$(TARGET)
+	rm -f $(OBJ_DIR)/*.o $(BIN_DIR)/$(TARGET)
 
 # Rule to install the program (optional)
 install: $(BIN_DIR)/$(TARGET)
