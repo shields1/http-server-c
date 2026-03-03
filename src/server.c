@@ -14,7 +14,25 @@
 #define BACKLOG 10
 #define MAXLEN 1024
 
-void sigchld_handler() {
+int send_all(int s, char *buf, int *len) {
+    int total = 0; // how many bytes have we sent
+    int bytes_left = *len; // how many we have left to send
+    int n;
+
+    while(total < *len) {
+        n = send(s, buf+total, bytes_left, 0);
+        if (n == 1) { break; }
+        total += n;
+        bytes_left -= n;
+    }
+    *len = total; //return number actually sent header_len
+
+    return n == -1 ? -1:0;// return -1 on failure, 0 on success
+}
+void sigchld_handler(int s) {
+
+    (void)s; // quite unused variable warning
+
     // waitpid() might overwrite errno, so we save and restore it:
     int saved_errno = errno;
 
@@ -46,7 +64,14 @@ int main() {
     char *uri;
     char *protocol;
     char *response;
-    char html[1024] = "<<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><title>Hello World</title></head><body><h1>Hello World</h1></body></html>";
+    char html_header[] = "HTTP/1.1 200 OK\n"
+                         "Content-Type: text/html; charset=UFT-8\n"
+                         "Date: Fri, 21 Jun 2024 14:18:33 GMT\n"
+                         "Last-Modified: Thu, 17 Oct 2019 07:18:26 GMT\n"
+                         "Content-Length: %d\n"
+                         "\n%s\n";
+    char html[] = "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><title>Hello World</title></head><body><h1>Hello World</h1></body></html>";
+    
     int rv, numbytes, response_length;
     
     memset(&hints, 0, sizeof(hints));
@@ -137,6 +162,16 @@ int main() {
             printf("method not GET");
         }
         printf("protocol is: %s\n", protocol);
+
+        int header_len = strlen(html_header);
+        int body_len = strlen(html);
+        size_t total_len = (size_t)header_len + body_len;
+        response = malloc(total_len + 1);
+        if(!response) {
+            perror("malloc response");
+            return EXIT_FAILURE;
+        } 
+
         response_length = snprintf(response,
                                    MAXLEN,
                                    "HTTP/1.1 200 OK\n"
@@ -146,12 +181,16 @@ int main() {
                                    "Content-Length: %d\n"
                                    "\n%s\n",
                                    response_length, html);
+        printf("Length to send is: %d\n", response_length);
         printf("sending:\n%s\n", response);
-        if (send(new_fd, response, response_length, 0) == -1) {
+
+        if (send_all(new_fd, response, &response_length) == -1) {
             perror("send");
+            printf("We opnly send %d bytes because of the error!\n", response_length);
         }
 
-        close(new_fd);    
+        close(new_fd);
+        free(response);    
     }
         close(sock_fd);
     return 0;
