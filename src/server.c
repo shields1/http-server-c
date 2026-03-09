@@ -13,6 +13,28 @@
 #define PORT "3490"
 #define BACKLOG 10
 #define MAXLEN 1024
+#define BUFFER_SIZE 1024
+#define HEADER_OK "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n"
+
+int route_to_int(const char *route) {
+    //printf("Route is %s\n", route);
+    if (strcmp(route, "/") == 0) return 1;
+    if (strcmp(route, "/rocket.png") == 0) return 2;
+    if (strcmp(route, "/fonts/iosevka-regular.woff") == 0) return 3;
+    if (strcmp(route, "/fonts/iosevka-regular.woff2") == 0) return 4;
+    return 0; // default case
+}
+char *parse_route(const char *route) {
+    int val = route_to_int(route);
+
+    switch (val) {
+        case 1: return "./static/index.html";
+        case 2: return "./static/rocket.png";
+        case 3: return "./static/fonts/iosevka-regular.woff";
+        case 4: return "./static/fonts/iosevka-regular.woff2";
+    }
+    return "./static/notfound.html";
+}
 
 int send_all(int s, char *buf, int *len) {
     int total = 0; // how many bytes have we sent
@@ -29,8 +51,28 @@ int send_all(int s, char *buf, int *len) {
 
     return n == -1 ? -1:0;// return -1 on failure, 0 on success
 }
-void sigchld_handler(int s) {
 
+void send_html(int sock_fd, const char *route) {
+    FILE *html = fopen(route, "r");
+    if (!html) {
+        perror("Error opening html file");
+        return;
+    }
+
+    char buf[BUFFER_SIZE] = {0};
+    int n_read = 0;
+    
+    // send header
+    send(sock_fd, HEADER_OK, strlen(HEADER_OK), 0);
+    // send payload
+    while ((n_read = fread(buf, sizeof(buf[0]), BUFFER_SIZE, html)) > 0) {
+        if (send_all(sock_fd, buf, &n_read) == -1) {
+            perror("send");
+        }
+   }
+}
+
+void sigchld_handler(int s) {
     (void)s; // quite unused variable warning
 
     // waitpid() might overwrite errno, so we save and restore it:
@@ -58,21 +100,12 @@ int main() {
     struct sigaction sa;
     int yes = 1;
     char s[INET6_ADDRSTRLEN];
-    char buf[1024];
+    char buf[1025];
     char *token;
     char *method;
-    char *uri;
+    char *route;
     char *protocol;
-    char *response;
-    const char html_header[] = "HTTP/1.1 200 OK\n"
-                         "Content-Type: text/html; charset=UFT-8\n"
-                         "Date: Fri, 21 Jun 2024 14:18:33 GMT\n"
-                         "Last-Modified: Thu, 17 Oct 2019 07:18:26 GMT\n"
-                         "Content-Length: %d\n"
-                         "\n%s\n";
-    const char html[] = "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><title>Hello World</title></head><body><h1>Hello World</h1></body></html>";
-    
-    int rv, numbytes, response_length;
+    int rv, numbytes;
     
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_UNSPEC;
@@ -136,7 +169,7 @@ int main() {
         inet_ntop(their_addr.ss_family, get_in_addr((struct sockaddr *)&their_addr), s, sizeof(s));
         printf("server: got connection from %s\n", s);
 
-        if ((numbytes = recv(new_fd, buf, 1024, 0)) == -1) {
+        if ((numbytes = recv(new_fd, buf, sizeof(buf) - 1, 0)) == -1) {
             perror("recv");
             exit(EXIT_FAILURE);
         }
@@ -148,49 +181,25 @@ int main() {
         method = token; 
         // fetch uri 
         token = strtok(NULL, " ");
-        uri = token;
+        route = token;
         // fetch protocol
         token = strtok(NULL, "\n");
         protocol = token;
         
-        printf("method: %s\nuri: %s\nprotocol: %s\n", method, uri, protocol);
-        /*while(token != NULL) {
+        printf("method: %s\nroute: %s\nprotocol: %s\n", method, route, protocol);
+        while(token != NULL) {
             printf(" %s\n", token);
             token = strtok(NULL, " ");
-        }*/
+        }
         if (strcmp(method, "GET") != 0) {
             printf("method not GET");
         }
         printf("protocol is: %s\n", protocol);
 
-        int header_len = strlen(html_header);
-        int body_len = strlen(html);
-        size_t total_len = (size_t)header_len + body_len;
-        response = malloc(total_len + 1);
-        if(!response) {
-            perror("malloc response");
-            return EXIT_FAILURE;
-        } 
-
-        response_length = snprintf(response,
-                                   MAXLEN,
-                                   "HTTP/1.1 200 OK\n"
-                                   "Content-Type: text/html; charset=UFT-8\n"
-                                   "Date: Fri, 21 Jun 2024 14:18:33 GMT\n"
-                                   "Last-Modified: Thu, 17 Oct 2019 07:18:26 GMT\n"
-                                   "Content-Length: %d\n"
-                                   "\n%s\n",
-                                   response_length, html);
-        printf("Length to send is: %d\n", response_length);
-        printf("sending:\n%s\n", response);
-
-        if (send_all(new_fd, response, &response_length) == -1) {
-            perror("send");
-            printf("We opnly send %d bytes because of the error!\n", response_length);
-        }
+        const char *file = parse_route(route);
+        send_html(new_fd, file);
 
         close(new_fd);
-        free(response);    
     }
         close(sock_fd);
     return 0;
