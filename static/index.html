@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>shields.nu</title>
+  <link rel="icon" type="image/x-icon" href="favicon.ico"
+  <!-- Font Awesome för sociala ikoner -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+  <style>
+  @font-face {
+      font-family: 'Iosevka';
+      src: url('fonts/iosevka-regular.woff2') format('woff2'),
+           url('fonts/iosevka-regular.woff') format('woff');
+      font-weight: normal;
+      font-style: normal;
+    }
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      font-family: 'Iosevka', monospace;
+      background: #18181A;
+      color: #F4F4F5;
+    }
+    body {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+    h1 {
+      font-size: 3rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      letter-spacing: -2px;
+    }
+    p {
+      font-size: 1.25rem;
+      margin-bottom: 2rem;
+      color: #A1A1AA;
+      max-width: 500px;
+    }
+
+    .links {
+      display: flex;
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    .links a {
+      color: #F4F4F5;
+      text-decoration: none;
+      font-weight: 500;
+      border-bottom: 2px solid #52525B;
+      transition: border-color 0.2s;
+    }
+    .links a:hover {
+      border-color: #F4F4F5;
+    }
+    footer {
+      font-size: 0.9rem;
+      color: #52525B;
+      margin-top: 2rem;
+      text-align: center;
+    }
+    .footer-icons {
+      margin-top: 0.5rem;
+      display: flex;
+      justify-content: center;
+      gap: 1.2rem;
+    }
+    .footer-icons a {
+      color: #52525B;
+      font-size: 1.5rem;
+      transition: color 0.2s;
+    }
+    .footer-icons a:hover {
+      color: #F4F4F5;
+    }
+    .rocket-icon {
+    width: 68px;
+    height: 68px;
+    object-fit: contain;
+    display: block;
+    }
+    .headline {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    }
+    @media (max-width: 600px) {
+      h1 { font-size: 2rem; }
+      p { font-size: 1rem; }
+      .links { flex-direction: column; gap: 1rem; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="headline">
+        <h1>shields.nu</h1>
+        <img src="rocket.png" alt="Raket" class="rocket-icon">
+    </div>
+  </main>
+    <section class="articles">
+
+    </section>
+  <footer>
+    Isak Shields
+    <div class="footer-icons">
+      <a href="mailto:isak@shields.nu" aria-label="E-post"><i class="fas fa-envelope"></i></a>
+      <a href="https://github.com/shields1" target="_blank" aria-label="GitHub"><i class="fab fa-github"></i></a>
+      <a href="https://www.linkedin.com/in/isak-shields-445119125" target="_blank" aria-label="LinkedIn"><i class="fab fa-linkedin"></i></a>
+      <a href="https://x.com/isakshields?t=ChgMXnYCmQ6GFqn6Y2xbzw&s=03" target="_blank" aria-label="X"><i class="fab fa-x-twitter"></i></a>
+    </div>
+  </footer>
+</body>
+</html>
