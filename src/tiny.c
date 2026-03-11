@@ -174,7 +174,7 @@ int main() {
         inet_ntop(their_addr.ss_family, get_in_addr((struct sockaddr *)&their_addr), s, sizeof(s));
         printf("server: got connection from %s\n", s);
         if (!fork()) {
-        //    close(sock_fd); // child does not need the listner
+            close(sock_fd); // child does not need the listner
 
         
             if ((numbytes = recv(new_fd, buf, sizeof(buf) - 1, 0)) == -1) {
